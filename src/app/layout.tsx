@@ -1,30 +1,39 @@
+import Footer from "@/components/footer";
+import Navbar from "@/components/navbar";
+
 import "@/styles/globals.css";
 
 export { metadata } from "@/metadata";
 
-import { PostHogProvider } from "@/components/PostHogProvider";
+import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
-import { inter as fontSans } from "@/styles/fonts";
+import { inter } from "@/styles/fonts";
 
-/**
- * @param layoutPros - The root layout component props
- * @param layoutPros.children - The layout children
- * @returns The root layout component
- */
 export default function RootLayout({
 	children,
-}: {
+}: Readonly<{
 	children: React.ReactNode;
-}) {
+}>) {
 	return (
-		<html lang="en">
+		<html lang="es">
 			<body
 				className={cn(
 					"min-h-screen bg-background font-sans antialiased",
-					fontSans.className,
+					inter.className,
 				)}
 			>
-				<PostHogProvider>{children}</PostHogProvider>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<div className="flex flex-col min-h-screen">
+						<Navbar />
+						<main className="flex-1">{children}</main>
+						<Footer />
+					</div>
+				</ThemeProvider>
 			</body>
 		</html>
 	);
