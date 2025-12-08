@@ -1,6 +1,15 @@
 "use client";
 
-import { BarChart, LineChart, Scatter, ScatterChart } from "recharts";
+import {
+	Bar,
+	BarChart,
+	Line,
+	LineChart,
+	Scatter,
+	ScatterChart,
+	XAxis,
+	YAxis,
+} from "recharts";
 import {
 	Card,
 	CardContent,
@@ -230,8 +239,14 @@ export default function ResultadosPage() {
 										layout="vertical"
 										margin={{ bottom: 20, left: 70, right: 20, top: 20 }}
 									>
+										<XAxis type="number" />
+										<YAxis type="category" dataKey="feature" />
 										<ChartTooltip content={<ChartTooltipContent />} />
-										<BarChart dataKey="importance" />
+										<Bar
+											dataKey="importance"
+											fill="var(--color-importance)"
+											radius={5}
+										/>
 									</BarChart>
 								</ChartContainer>
 								<p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
@@ -265,6 +280,12 @@ export default function ResultadosPage() {
 									<ScatterChart
 										margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
 									>
+										<XAxis type="number" dataKey="actual" name="Valor Real" />
+										<YAxis
+											type="number"
+											dataKey="predicted"
+											name="Predicción"
+										/>
 										<ChartTooltip content={<ChartTooltipContent />} />
 										<Scatter
 											name="Predicciones"
@@ -310,7 +331,19 @@ export default function ResultadosPage() {
 										data={timeSeriesPredictionData}
 										margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
 									>
+										<XAxis dataKey="month" />
+										<YAxis />
 										<ChartTooltip content={<ChartTooltipContent />} />
+										<Line
+											type="monotone"
+											dataKey="actual"
+											stroke="var(--color-actual)"
+										/>
+										<Line
+											type="monotone"
+											dataKey="predicted"
+											stroke="var(--color-predicted)"
+										/>
 									</LineChart>
 								</ChartContainer>
 								<p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
@@ -344,6 +377,12 @@ export default function ResultadosPage() {
 									<ScatterChart
 										margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
 									>
+										<XAxis
+											type="number"
+											dataKey="predicted"
+											name="Valor Predicho"
+										/>
+										<YAxis type="number" dataKey="residual" name="Residuo" />
 										<ChartTooltip content={<ChartTooltipContent />} />
 										<Scatter
 											name="Residuos"

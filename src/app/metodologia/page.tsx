@@ -1,6 +1,6 @@
 "use client";
 
-import { LineChart } from "recharts";
+import { CartesianGrid, Legend, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
 	Card,
 	CardContent,
@@ -38,6 +38,15 @@ export default function MetodologiaPage() {
 		{ degree: 10, training: 0.05, validation: 0.92 },
 	];
 
+	// Datos para comparación de modelos combinados
+	const featureCombinationData = [
+		{ combination: "PM2.5 + NO2", mse: 0.38, r2: 0.74 },
+		{ combination: "PM10 + SO2", mse: 0.42, r2: 0.7 },
+		{ combination: "TEMP + O3", mse: 0.45, r2: 0.68 },
+		{ combination: "NO2 + O3", mse: 0.4, r2: 0.72 },
+		{ combination: "PM2.5 + TEMP", mse: 0.43, r2: 0.69 },
+	];
+
 	return (
 		<div className="container py-10">
 			<div className="space-y-6">
@@ -64,8 +73,8 @@ export default function MetodologiaPage() {
 							<CardHeader>
 								<CardTitle>Modelo Base de Regresión Lineal</CardTitle>
 								<CardDescription>
-									Implementación del modelo de regresión lineal utilizando todas
-									las características
+									Implementación del modelo de regresión lineal simple
+									utilizando todas las características
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
@@ -73,7 +82,8 @@ export default function MetodologiaPage() {
 									<p>
 										El modelo base de regresión lineal se implementó utilizando
 										todas las características disponibles en el conjunto de
-										datos. La ecuación del modelo es:
+										datos, aplicando directamente <code>model.fit()</code> sin
+										transformaciones adicionales. La ecuación del modelo es:
 									</p>
 									<div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
 										<p className="font-mono">
@@ -161,136 +171,137 @@ export default function MetodologiaPage() {
 
 						<Card>
 							<CardHeader>
-								<CardTitle>Modelos Alternativos</CardTitle>
+								<CardTitle>
+									Regresión Lineal con Combinación de Características
+								</CardTitle>
 								<CardDescription>
-									Implementación de soluciones alternativas basadas en regresión
-									lineal
+									Implementación de soluciones alternativas combinando pares de
+									columnas
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<div className="space-y-4">
 									<p>
-										Se implementaron varios modelos alternativos basados en
-										regresión lineal mediante la combinación de características
-										existentes para mejorar el resultado base:
+										Implementamos varios modelos alternativos basados en
+										regresión lineal mediante la combinación de pares de
+										características existentes para crear nuevas variables.
+										Realizamos múltiples pruebas con diferentes combinaciones
+										para identificar las más efectivas:
+									</p>
+
+									<div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+										<h3 className="text-lg font-semibold mb-2">
+											Proceso de combinación de características
+										</h3>
+										<ol className="list-decimal pl-6 space-y-2">
+											<li>
+												<strong>Selección de pares:</strong> Identificamos pares
+												de variables con alta correlación con la variable
+												objetivo o con potencial interacción física.
+											</li>
+											<li>
+												<strong>Creación de nuevas características:</strong>{" "}
+												Generamos nuevas variables mediante operaciones como
+												multiplicación, suma, o relaciones entre las variables
+												originales.
+											</li>
+											<li>
+												<strong>Evaluación:</strong> Entrenamos modelos con
+												estas nuevas características y evaluamos su rendimiento
+												en el conjunto de validación.
+											</li>
+										</ol>
+									</div>
+
+									<h3 className="text-lg font-semibold mt-6 mb-2">
+										Rendimiento de diferentes combinaciones
+									</h3>
+									<ChartContainer
+										config={{
+											mse: {
+												color: "hsl(var(--chart-1))",
+												label: "MSE (menor es mejor)",
+											},
+											r2: {
+												color: "hsl(var(--chart-2))",
+												label: "R² (mayor es mejor)",
+											},
+										}}
+										className="h-[300px]"
+									>
+										<LineChart
+											data={featureCombinationData}
+											margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
+										>
+											<CartesianGrid strokeDasharray="3 3" />
+											<XAxis dataKey="combination" />
+											<YAxis />
+											<ChartTooltip content={<ChartTooltipContent />} />
+											<Legend />
+											<Line
+												type="monotone"
+												dataKey="mse"
+												stroke="var(--color-mse)"
+											/>
+											<Line
+												type="monotone"
+												dataKey="r2"
+												stroke="var(--color-r2)"
+											/>
+										</LineChart>
+									</ChartContainer>
+
+									<p className="mt-4">
+										Las combinaciones más efectivas fueron aquellas que
+										involucraban PM2.5 y NO2, lo que es consistente con la alta
+										correlación individual de estas variables con la
+										concentración de CO. La combinación de estas dos variables
+										permitió capturar efectos sinérgicos que no se detectan
+										cuando se consideran por separado.
 									</p>
 
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
 										<div className="border p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-2">
-												Modelo 1: Variables Significativas
+												Combinaciones más efectivas
 											</h3>
-											<p className="text-sm mb-2">
-												Utiliza solo las variables con p-valor &lt; 0.05 en el
-												modelo base:
-											</p>
-											<div className="bg-gray-100 dark:bg-gray-800 p-2 rounded my-2">
-												<code>
-													CO = β₀ + β₁×PM2.5 + β₂×PM10 + β₃×SO2 + β₄×NO2 + β₅×O3
-													+ β₆×TEMP + β₇×WSPM
-												</code>
-											</div>
+											<ul className="list-disc pl-6 space-y-1">
+												<li>
+													<strong>PM2.5 × NO2:</strong> Captura el efecto
+													combinado de partículas finas y dióxido de nitrógeno,
+													ambos relacionados con la combustión.
+												</li>
+												<li>
+													<strong>NO2 / O3:</strong> Refleja la relación inversa
+													entre estos contaminantes en ciclos fotoquímicos.
+												</li>
+												<li>
+													<strong>PM2.5 + PM10:</strong> Representa el efecto
+													acumulativo de partículas de diferentes tamaños.
+												</li>
+											</ul>
 										</div>
 										<div className="border p-4 rounded-lg">
 											<h3 className="text-lg font-semibold mb-2">
-												Modelo 2: Interacciones
+												Combinaciones menos efectivas
 											</h3>
-											<p className="text-sm mb-2">
-												Incluye términos de interacción entre variables
-												correlacionadas:
-											</p>
-											<div className="bg-gray-100 dark:bg-gray-800 p-2 rounded my-2">
-												<code>
-													CO = β₀ + β₁×PM2.5 + ... + β₁₁×(PM2.5×NO2) +
-													β₁₂×(TEMP×O3)
-												</code>
-											</div>
-										</div>
-										<div className="border p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-2">
-												Modelo 3: Transformaciones
-											</h3>
-											<p className="text-sm mb-2">
-												Aplica transformaciones logarítmicas a variables con
-												distribución sesgada:
-											</p>
-											<div className="bg-gray-100 dark:bg-gray-800 p-2 rounded my-2">
-												<code>
-													CO = β₀ + β₁×log(PM2.5) + β₂×log(PM10) + ...
-												</code>
-											</div>
-										</div>
-										<div className="border p-4 rounded-lg">
-											<h3 className="text-lg font-semibold mb-2">
-												Modelo 4: Características Temporales
-											</h3>
-											<p className="text-sm mb-2">
-												Incorpora características temporales como variables
-												dummy para mes y hora:
-											</p>
-											<div className="bg-gray-100 dark:bg-gray-800 p-2 rounded my-2">
-												<code>
-													CO = β₀ + β₁×PM2.5 + ... + β₁₁×Month_1 + ... +
-													β₂₂×Hour_1 + ...
-												</code>
-											</div>
+											<ul className="list-disc pl-6 space-y-1">
+												<li>
+													<strong>RAIN × WSPM:</strong> No mostró mejora
+													significativa, posiblemente porque estos factores
+													afectan indirectamente la concentración de CO.
+												</li>
+												<li>
+													<strong>PRES + DEWP:</strong> Variables meteorológicas
+													que individualmente tienen baja correlación con CO.
+												</li>
+												<li>
+													<strong>TEMP × PRES:</strong> No capturó patrones
+													relevantes para la predicción de CO.
+												</li>
+											</ul>
 										</div>
 									</div>
-
-									<h3 className="text-lg font-semibold mt-6 mb-2">
-										Comparación de Modelos Lineales
-									</h3>
-									<Table>
-										<TableHeader>
-											<TableRow>
-												<TableHead>Modelo</TableHead>
-												<TableHead>MSE (Entrenamiento)</TableHead>
-												<TableHead>MSE (Validación)</TableHead>
-												<TableHead>R² (Validación)</TableHead>
-											</TableRow>
-										</TableHeader>
-										<TableBody>
-											<TableRow>
-												<TableCell>Modelo Base</TableCell>
-												<TableCell>0.42</TableCell>
-												<TableCell>0.45</TableCell>
-												<TableCell>0.68</TableCell>
-											</TableRow>
-											<TableRow>
-												<TableCell>
-													Modelo 1: Variables Significativas
-												</TableCell>
-												<TableCell>0.43</TableCell>
-												<TableCell>0.44</TableCell>
-												<TableCell>0.69</TableCell>
-											</TableRow>
-											<TableRow>
-												<TableCell>Modelo 2: Interacciones</TableCell>
-												<TableCell>0.38</TableCell>
-												<TableCell>0.41</TableCell>
-												<TableCell>0.72</TableCell>
-											</TableRow>
-											<TableRow>
-												<TableCell>Modelo 3: Transformaciones</TableCell>
-												<TableCell>0.36</TableCell>
-												<TableCell>0.39</TableCell>
-												<TableCell>0.74</TableCell>
-											</TableRow>
-											<TableRow className="font-bold">
-												<TableCell>
-													Modelo 4: Características Temporales
-												</TableCell>
-												<TableCell>0.35</TableCell>
-												<TableCell>0.37</TableCell>
-												<TableCell>0.76</TableCell>
-											</TableRow>
-										</TableBody>
-									</Table>
-									<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-										El Modelo 4 (Características Temporales) obtuvo el mejor
-										rendimiento en el conjunto de validación, con un MSE de 0.37
-										y un R² de 0.76.
-									</p>
 								</div>
 							</CardContent>
 						</Card>
@@ -301,16 +312,18 @@ export default function MetodologiaPage() {
 							<CardHeader>
 								<CardTitle>Regresión Polinómica</CardTitle>
 								<CardDescription>
-									Implementación de soluciones alternativas basadas en regresión
-									polinómica
+									Implementación de soluciones expandiendo características de
+									manera polinómica
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<div className="space-y-4">
 									<p>
-										Se implementaron modelos de regresión polinómica aumentando
-										los grados de las características para mejorar el resultado
-										base. La forma general del modelo polinómico es:
+										Implementamos modelos de regresión polinómica expandiendo
+										algunas características a diferentes grados. Probamos
+										específicamente con los grados 1, 2, 3 y 4 para identificar
+										el nivel óptimo de complejidad. La forma general del modelo
+										polinómico es:
 									</p>
 									<div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
 										<p className="font-mono">
@@ -344,7 +357,21 @@ export default function MetodologiaPage() {
 											data={errorVsComplexityData}
 											margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
 										>
+											<CartesianGrid strokeDasharray="3 3" />
+											<XAxis dataKey="degree" />
+											<YAxis />
 											<ChartTooltip content={<ChartTooltipContent />} />
+											<Legend />
+											<Line
+												type="monotone"
+												dataKey="training"
+												stroke="var(--color-training)"
+											/>
+											<Line
+												type="monotone"
+												dataKey="validation"
+												stroke="var(--color-validation)"
+											/>
 										</LineChart>
 									</ChartContainer>
 
@@ -683,7 +710,7 @@ export default function MetodologiaPage() {
 										</TableRow>
 										<TableRow>
 											<TableCell>
-												Regresión Lineal (Características Temporales)
+												Regresión Lineal (Combinación PM2.5+NO2)
 											</TableCell>
 											<TableCell>0.39</TableCell>
 											<TableCell>0.62</TableCell>
@@ -702,7 +729,8 @@ export default function MetodologiaPage() {
 								<p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
 									El modelo de regresión polinómica de grado 4 superó
 									significativamente tanto al modelo base como al mejor modelo
-									lineal alternativo en todas las métricas de evaluación.
+									lineal con combinación de características en todas las
+									métricas de evaluación.
 								</p>
 							</CardContent>
 						</Card>

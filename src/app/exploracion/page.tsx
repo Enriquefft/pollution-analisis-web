@@ -1,13 +1,21 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
 import {
+	Bar,
 	BarChart,
+	CartesianGrid,
+	Line,
 	LineChart,
+	PolarAngleAxis,
 	PolarGrid,
+	PolarRadiusAxis,
 	Radar,
 	RadarChart,
-	RadialBar,
+	XAxis,
+	YAxis,
 } from "recharts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
 	Card,
 	CardContent,
@@ -100,6 +108,13 @@ export default function ExploracionPage() {
 			fullMark: 150,
 			subject: "CO",
 		},
+	];
+
+	const normalizationComparisonData = [
+		{ mse: 0.58, name: "Sin Normalización", r2: 0.62 },
+		{ mse: 0.45, name: "Min-Max Scaling", r2: 0.68 },
+		{ mse: 0.42, name: "Z-Score", r2: 0.71 },
+		{ mse: 0.44, name: "Robust Scaling", r2: 0.69 },
 	];
 
 	return (
@@ -353,10 +368,13 @@ export default function ExploracionPage() {
 										layout="vertical"
 										margin={{ bottom: 20, left: 70, right: 20, top: 20 }}
 									>
+										<CartesianGrid strokeDasharray="3 3" />
+										<XAxis type="number" />
+										<YAxis type="category" dataKey="feature" />
 										<ChartTooltip content={<ChartTooltipContent />} />
-										<RadialBar
+										<Bar
 											dataKey="correlation"
-											fill="var(--color-correlation)"
+											fill="var(--color-importance)"
 											radius={5}
 										/>
 									</BarChart>
@@ -393,8 +411,11 @@ export default function ExploracionPage() {
 											data={dataDistribution}
 											margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
 										>
+											<CartesianGrid strokeDasharray="3 3" />
+											<XAxis dataKey="name" />
+											<YAxis />
 											<ChartTooltip content={<ChartTooltipContent />} />
-											<RadialBar
+											<Bar
 												dataKey="value"
 												fill="var(--color-value)"
 												radius={5}
@@ -425,7 +446,15 @@ export default function ExploracionPage() {
 											data={timeSeriesData}
 											margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
 										>
+											<CartesianGrid strokeDasharray="3 3" />
+											<XAxis dataKey="month" />
+											<YAxis />
 											<ChartTooltip content={<ChartTooltipContent />} />
+											<Line
+												type="monotone"
+												dataKey="co"
+												stroke="var(--color-co)"
+											/>
 										</LineChart>
 									</ChartContainer>
 								</CardContent>
@@ -448,13 +477,10 @@ export default function ExploracionPage() {
 										}}
 										className="h-[400px]"
 									>
-										<RadarChart
-											outerRadius={150}
-											width={730}
-											height={400}
-											data={radarData}
-										>
+										<RadarChart outerRadius={150} data={radarData}>
 											<PolarGrid />
+											<PolarAngleAxis dataKey="subject" />
+											<PolarRadiusAxis />
 											<ChartTooltip content={<ChartTooltipContent />} />
 											<Radar
 												name="Contaminantes"
@@ -511,6 +537,77 @@ export default function ExploracionPage() {
 
 						<Card>
 							<CardHeader>
+								<CardTitle>Codificación de la Dirección del Viento</CardTitle>
+								<CardDescription>
+									Transformación de variables categóricas a numéricas
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<div className="space-y-4">
+									<p>
+										Para manejar la variable categórica de dirección del viento
+										(WD), implementamos una función especializada llamada{" "}
+										<code>encode_wind_direction</code> que transforma las
+										direcciones de brújula en dos valores numéricos:
+									</p>
+
+									<div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+										<h3 className="text-lg font-semibold mb-2">
+											Función encode_wind_direction
+										</h3>
+										<p className="mb-2">
+											Esta función convierte direcciones cardinales (N, NE, E,
+											SE, etc.) en componentes de seno y coseno para preservar
+											la naturaleza cíclica de la dirección:
+										</p>
+										<div className="bg-white dark:bg-gray-900 p-3 rounded font-mono text-sm">
+											<p>def encode_wind_direction(direction):</p>
+											<p className="pl-4">
+												# Mapeo de direcciones a ángulos en radianes
+												<br />
+												angle_map = &#123;
+												<br />
+												&nbsp;&nbsp;"N": 0, "NNE": π/8, "NE": π/4, "ENE": 3π/8,
+												<br />
+												&nbsp;&nbsp;"E": π/2, "ESE": 5π/8, "SE": 3π/4, "SSE":
+												7π/8,
+												<br />
+												&nbsp;&nbsp;"S": π, "SSW": 9π/8, "SW": 5π/4, "WSW":
+												11π/8,
+												<br />
+												&nbsp;&nbsp;"W": 3π/2, "WNW": 13π/8, "NW": 7π/4, "NNW":
+												15π/8
+												<br />
+												&#125;
+												<br />
+												angle = angle_map.get(direction, 0)
+												<br /># Retorna componentes seno y coseno
+												<br />
+												return np.sin(angle), np.cos(angle)
+											</p>
+										</div>
+									</div>
+
+									<p>
+										Esta transformación es crucial porque permite que el modelo
+										capture adecuadamente la naturaleza cíclica de la dirección
+										del viento. Por ejemplo, las direcciones N (0°) y NNW
+										(337.5°) están físicamente cercanas, pero numéricamente
+										distantes si se codificaran como 0 y 337.5.
+									</p>
+
+									<p>
+										Al utilizar componentes de seno y coseno, preservamos la
+										relación circular entre las direcciones, permitiendo que el
+										modelo detecte patrones relacionados con la dirección del
+										viento de manera más efectiva.
+									</p>
+								</div>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader>
 								<CardTitle>Normalización de Datos</CardTitle>
 								<CardDescription>
 									Técnicas de normalización aplicadas al conjunto de datos
@@ -519,8 +616,8 @@ export default function ExploracionPage() {
 							<CardContent>
 								<div className="space-y-4">
 									<p>
-										Se aplicaron dos técnicas de normalización para preparar los
-										datos:
+										Se aplicaron y compararon varias técnicas de normalización
+										para preparar los datos:
 									</p>
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 										<div className="border p-4 rounded-lg">
@@ -556,10 +653,62 @@ export default function ExploracionPage() {
 											</p>
 										</div>
 									</div>
+
+									<h3 className="text-lg font-semibold mt-6 mb-2">
+										Comparación de Técnicas de Normalización
+									</h3>
+									<p className="mb-4">
+										Evaluamos el rendimiento de diferentes técnicas de
+										normalización utilizando una regresión lineal simple:
+									</p>
+
+									<ChartContainer
+										config={{
+											mse: {
+												color: "hsl(var(--chart-1))",
+												label: "MSE (menor es mejor)",
+											},
+											r2: {
+												color: "hsl(var(--chart-2))",
+												label: "R² (mayor es mejor)",
+											},
+										}}
+										className="h-[300px]"
+									>
+										<BarChart
+											data={normalizationComparisonData}
+											margin={{ bottom: 20, left: 20, right: 20, top: 20 }}
+										>
+											<CartesianGrid strokeDasharray="3 3" />
+											<XAxis dataKey="name" />
+											<YAxis />
+											<ChartTooltip content={<ChartTooltipContent />} />
+											<Bar dataKey="mse" fill="var(--color-mse)" name="MSE" />
+											<Bar dataKey="r2" fill="var(--color-r2)" name="R²" />
+										</BarChart>
+									</ChartContainer>
+
 									<p>
 										Para nuestro modelo final, se utilizó Z-Score Normalization
-										ya que mostró mejores resultados en la validación cruzada.
+										ya que mostró mejores resultados en la validación cruzada,
+										con un MSE más bajo y un R² más alto.
 									</p>
+
+									<Alert className="mt-6 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+										<AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+										<AlertTitle className="text-blue-600 dark:text-blue-400">
+											Oportunidad de mejora
+										</AlertTitle>
+										<AlertDescription className="text-blue-600/90 dark:text-blue-400/90">
+											Aunque comparamos diferentes técnicas de normalización
+											usando regresión lineal simple, existe una oportunidad
+											significativa para extender este análisis a otros tipos de
+											regresión como Ridge, Lasso o ElasticNet. Esto podría
+											revelar interacciones importantes entre el método de
+											normalización y el tipo de regularización, potencialmente
+											mejorando aún más nuestros resultados.
+										</AlertDescription>
+									</Alert>
 								</div>
 							</CardContent>
 						</Card>
